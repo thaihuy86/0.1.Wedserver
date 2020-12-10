@@ -29,7 +29,7 @@ static const char *TAG = "wifi softAP";
 char html_index2[] =
 		"</div>"
 		"</form>"
-		"<form>"
+		"<form action='/ssid'>"
 			"<div style ='padding-bottom: 10px; text-align: center;'>"
 					"<label for='ssid'>Ten Wifi</label>"
 					"<input style=' margin-left: 29px;' type='text' name='ssid' size='30'/><br>"
@@ -173,7 +173,6 @@ static esp_err_t wed_get_handler(httpd_req_t *req)
      * string passed in user context*/
     httpd_resp_send(req,http_index_hml, strlen(http_index_hml));
 
-    ESP_LOGI(TAG, "%s", c);
     /* After sending the HTTP response the old HTTP request
      * headers are lost. Check if HTTP request headers can be read now. */
     return ESP_OK;
@@ -206,7 +205,7 @@ static esp_err_t scan_get_handler(httpd_req_t *req)
 				"<body>"
 					"<h2>Cau Hinh Wifi</h2>"
 				"<form>"
-				"<div style ='padding-bottom: 10px; font-size: 30px; margin-left:45%;'>"
+				"<div style ='padding-bottom: 10px; font-size: 40px; margin-left:45%;'>"
 				"<label style='color: #e67e32;'>Danh Sach Wifi</label>"
 				;
 	char html[2048]={0};
@@ -216,6 +215,7 @@ static esp_err_t scan_get_handler(httpd_req_t *req)
 		sprintf(buffer, "<label> %s  %d  %d </label><br>", listWifi[i].ssid, listWifi[i].rssi, listWifi[i].primary);
 		strcat(html,buffer);
 	}
+
 	strcat(http_index_hml,html);
 	strcat(http_index_hml,html_index2);
     /* Send response with custom headers and body set as the
@@ -232,8 +232,36 @@ static const httpd_uri_t scan = {
     .method    = HTTP_GET,
     .handler   = scan_get_handler,
 };
+//////////////////////
+//SSID va PASS
+/////////////////////
+static esp_err_t ssid_get_handler(httpd_req_t *req)
+{
+	wifi_scan();
+	char http_index_hml[1024] =
+				"<!DOCTYPE html>"
+				"<html>"
+				"<head>"
+				"<title>Test</title>"
+				"</head>"
+				"<body>"
+				"<p style ='font-size: 40px;'>DANG LUU WIFI</p>"
+			"<a href='/'><button style ='font-size: 20px;color: white;background-color: #e67e32; border-radius: 20px;text-align: center;'>Quay lai</button></a>"
+			"</body></html>";
+    /* Send response with custom headers and body set as the
+     * string passed in user context*/
+	httpd_resp_send(req,http_index_hml, strlen(http_index_hml));
 
+    /* After sending the HTTP response the old HTTP request
+     * headers are lost. Check if HTTP request headers can be read now. */
+    return ESP_OK;
+}
 
+static const httpd_uri_t ssid = {
+    .uri       = "/ssid",
+    .method    = HTTP_GET,
+    .handler   = ssid_get_handler,
+};
 
 static httpd_handle_t start_webserver(void)
 {
@@ -247,6 +275,7 @@ static httpd_handle_t start_webserver(void)
         ESP_LOGI(TAG, "Registering URI handlers");
         httpd_register_uri_handler(server, &scan);
         httpd_register_uri_handler(server, &wed);
+        httpd_register_uri_handler(server, &ssid);
         return server;
     }
     ESP_LOGI(TAG, "Error starting server!");
